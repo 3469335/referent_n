@@ -72,8 +72,24 @@ vercel
 
 ## Переменные окружения
 
-Если в будущем понадобятся переменные окружения (например, API ключи), добавьте их в настройках проекта на Vercel:
+### Локальная разработка
+
+Создайте файл `.env.local` в корне проекта:
+
+```env
+# OpenRouter API Key
+# Получите ключ на https://openrouter.ai/
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+
+# Optional: App URL for OpenRouter API
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Деплой на Vercel
+
+Добавьте переменные окружения в настройках проекта на Vercel:
 - Settings → Environment Variables
+- Добавьте `OPENROUTER_API_KEY` с вашим API ключом
 
 ## Технологии
 
