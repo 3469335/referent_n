@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ArticleData {
@@ -25,6 +25,8 @@ export default function Home() {
   const [cachedResults, setCachedResults] = useState<CachedResult>({});
   const [processStatus, setProcessStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   // Функция для преобразования ошибок в дружественные тексты
   const getFriendlyError = (error: Error | string, context?: string): string => {
@@ -66,6 +68,40 @@ export default function Home() {
     // Если не удалось определить тип ошибки, возвращаем общее сообщение
     return 'Произошла ошибка. Попробуйте еще раз.';
   };
+
+  // Функция очистки всех состояний
+  const handleClear = () => {
+    setUrl('');
+    setResult('');
+    setError(null);
+    setArticleData(null);
+    setCachedResults({});
+    setActiveButton(null);
+    setProcessStatus('');
+    setCopied(false);
+  };
+
+  // Функция копирования результата
+  const handleCopy = async () => {
+    if (result) {
+      try {
+        await navigator.clipboard.writeText(result);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
+  // Автоматическая прокрутка к результатам после успешной генерации
+  useEffect(() => {
+    if (result && !result.startsWith('Ошибка:') && resultRef.current) {
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [result]);
 
   const handleTranslate = async () => {
     if (!articleData) {
@@ -243,9 +279,20 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-8">
-            Референт англоязычных статей
-          </h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Референт англоязычных статей
+            </h1>
+            {(url || result || error || articleData) && (
+              <button
+                onClick={handleClear}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                title="Очистить все данные"
+              >
+                Очистить
+              </button>
+            )}
+          </div>
           
           {/* Поле ввода URL */}
           <div className="mb-8">
@@ -423,7 +470,7 @@ export default function Home() {
 
           {/* Блок отображения результата */}
           {result && (
-            <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div ref={resultRef} className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {result.startsWith('Ошибка:') ? 'Ошибка' : 
@@ -433,14 +480,37 @@ export default function Home() {
                    activeButton === 'telegram' ? 'Пост для Telegram:' :
                    articleData ? 'Загруженная статья:' : 'Результат:'}
                 </h2>
-                {articleData && !result.startsWith('Ошибка:') && (
-                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Статья загружена
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  {articleData && !result.startsWith('Ошибка:') && (
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Статья загружена
+                    </div>
+                  )}
+                  <button
+                    onClick={handleCopy}
+                    className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg transition-colors flex items-center gap-2"
+                    title="Копировать результат"
+                  >
+                    {copied ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Скопировано
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Копировать
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="prose dark:prose-invert max-w-none">
                 <p className={`whitespace-pre-wrap leading-relaxed ${
