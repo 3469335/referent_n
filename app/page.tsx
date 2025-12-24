@@ -276,17 +276,17 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-6 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Референт англоязычных статей
             </h1>
             {(url || result || error || articleData) && (
               <button
                 onClick={handleClear}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors self-start sm:self-auto"
                 title="Очистить все данные"
               >
                 Очистить
@@ -295,7 +295,7 @@ export default function Home() {
           </div>
           
           {/* Поле ввода URL */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <label htmlFor="article-url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               URL англоязычной статьи
             </label>
@@ -312,7 +312,7 @@ export default function Home() {
                 }
               }}
               placeholder="Введите URL статьи, например: https://example.com/article"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
+              className="w-full px-4 py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
               disabled={loading}
             />
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -322,12 +322,12 @@ export default function Home() {
 
           {/* Кнопка перевода */}
           {articleData && (
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <button
                 onClick={handleTranslate}
                 disabled={loading}
                 title="Показать полный перевод статьи"
-                className={`w-full px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                className={`w-full px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                   activeButton === 'translate' && loading
                     ? 'bg-orange-600 ring-4 ring-orange-300'
                     : 'bg-orange-500 hover:bg-orange-600'
@@ -350,12 +350,12 @@ export default function Home() {
 
           {/* Информационное сообщение */}
           {url.trim() && !articleData && !loading && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 sm:mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-sm text-blue-800 dark:text-blue-300">
+                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-300">
                   <strong>Подсказка:</strong> Нажмите на любую из кнопок ниже — статья загрузится и обработается автоматически.
                 </p>
               </div>
@@ -363,11 +363,11 @@ export default function Home() {
           )}
 
           {/* Кнопки действий */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <button
               onClick={() => handleSubmit('summary')}
               disabled={loading || !url.trim()}
-              className={`px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              className={`w-full px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                 activeButton === 'summary' && loading
                   ? 'bg-indigo-600 ring-4 ring-indigo-300'
                   : 'bg-indigo-500 hover:bg-indigo-600'
@@ -390,7 +390,7 @@ export default function Home() {
             <button
               onClick={() => handleSubmit('theses')}
               disabled={loading || !url.trim()}
-              className={`px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              className={`w-full px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                 activeButton === 'theses' && loading
                   ? 'bg-green-600 ring-4 ring-green-300'
                   : 'bg-green-500 hover:bg-green-600'
@@ -413,7 +413,7 @@ export default function Home() {
             <button
               onClick={() => handleSubmit('telegram')}
               disabled={loading || !url.trim()}
-              className={`px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+              className={`w-full px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                 activeButton === 'telegram' && loading
                   ? 'bg-purple-600 ring-4 ring-purple-300'
                   : 'bg-purple-500 hover:bg-purple-600'
@@ -451,15 +451,15 @@ export default function Home() {
 
           {/* Блок ошибок */}
           {error && (
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <Alert variant="destructive">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <div className="flex-1">
-                    <AlertTitle>Ошибка</AlertTitle>
-                    <AlertDescription className="mt-1">
+                  <div className="flex-1 min-w-0">
+                    <AlertTitle className="text-sm sm:text-base">Ошибка</AlertTitle>
+                    <AlertDescription className="mt-1 text-xs sm:text-sm break-words">
                       {error}
                     </AlertDescription>
                   </div>
@@ -470,9 +470,9 @@ export default function Home() {
 
           {/* Блок отображения результата */}
           {result && (
-            <div ref={resultRef} className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <div ref={resultRef} className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white break-words">
                   {result.startsWith('Ошибка:') ? 'Ошибка' : 
                    activeButton === 'translate' ? 'Перевод статьи:' :
                    activeButton === 'summary' ? 'Резюме статьи:' :
@@ -480,10 +480,10 @@ export default function Home() {
                    activeButton === 'telegram' ? 'Пост для Telegram:' :
                    articleData ? 'Загруженная статья:' : 'Результат:'}
                 </h2>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                   {articleData && !result.startsWith('Ошибка:') && (
-                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       Статья загружена
@@ -491,7 +491,7 @@ export default function Home() {
                   )}
                   <button
                     onClick={handleCopy}
-                    className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg transition-colors flex items-center gap-2"
+                    className="px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg transition-colors flex items-center gap-2 self-start"
                     title="Копировать результат"
                   >
                     {copied ? (
@@ -512,8 +512,8 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-              <div className="prose dark:prose-invert max-w-none">
-                <p className={`whitespace-pre-wrap leading-relaxed ${
+              <div className="prose dark:prose-invert max-w-none text-sm sm:text-base">
+                <p className={`whitespace-pre-wrap break-words leading-relaxed ${
                   result.startsWith('Ошибка:') 
                     ? 'text-red-700 dark:text-red-400' 
                     : 'text-gray-700 dark:text-gray-300'
@@ -525,11 +525,11 @@ export default function Home() {
           )}
 
           {!result && !loading && (
-            <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
-              <svg className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 text-center">
+              <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="text-gray-500 dark:text-gray-400 mb-2">
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-2 px-2">
                 {!url.trim() 
                   ? 'Введите URL статьи и выберите действие'
                   : !articleData
@@ -537,7 +537,7 @@ export default function Home() {
                   : 'Выберите действие для обработки статьи'}
               </p>
               {articleData && (
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                <p className="text-xs sm:text-sm text-gray-400 dark:text-gray-500 mt-2 px-2 break-words">
                   Статья готова к обработке: <span className="font-medium">{articleData.title}</span>
                 </p>
               )}
