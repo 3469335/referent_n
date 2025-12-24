@@ -22,6 +22,7 @@ export default function Home() {
   const [activeButton, setActiveButton] = useState<string | null>(null);
   const [articleData, setArticleData] = useState<ArticleData | null>(null);
   const [cachedResults, setCachedResults] = useState<CachedResult>({});
+  const [processStatus, setProcessStatus] = useState<string>('');
 
   const handleTranslate = async () => {
     if (!articleData) {
@@ -39,6 +40,7 @@ export default function Home() {
     setLoading(true);
     setActiveButton('translate');
     setResult('');
+    setProcessStatus('Перевожу статью...');
 
     try {
       // Формируем текст для перевода
@@ -75,6 +77,7 @@ export default function Home() {
       console.error(error);
     } finally {
       setLoading(false);
+      setProcessStatus('');
     }
   };
 
@@ -101,6 +104,7 @@ export default function Home() {
 
       // Если статья не загружена, сначала загружаем её
       if (!currentArticleData) {
+        setProcessStatus('Загружаю статью...');
         const parseResponse = await fetch('/api/parse', {
           method: 'POST',
           headers: {
@@ -124,6 +128,14 @@ export default function Home() {
       if (!currentArticleData) {
         throw new Error('Не удалось загрузить статью');
       }
+
+      // Обновляем статус в зависимости от действия
+      const statusMessages = {
+        summary: 'Создаю резюме статьи...',
+        theses: 'Извлекаю тезисы...',
+        telegram: 'Создаю пост для Telegram...'
+      };
+      setProcessStatus(statusMessages[action]);
 
       // Формируем текст для обработки (заголовок + содержание)
       const textToProcess = `Title: ${currentArticleData.title}\n\nContent:\n${currentArticleData.content}`;
@@ -161,6 +173,7 @@ export default function Home() {
       console.error(error);
     } finally {
       setLoading(false);
+      setProcessStatus('');
     }
   };
 
@@ -189,10 +202,13 @@ export default function Home() {
                   setArticleData(null);
                 }
               }}
-              placeholder="https://example.com/article"
+              placeholder="Введите URL статьи, например: https://example.com/article"
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white outline-none transition-all"
               disabled={loading}
             />
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Укажите ссылку на англоязычную статью
+            </p>
           </div>
 
           {/* Кнопка перевода */}
@@ -307,6 +323,21 @@ export default function Home() {
               )}
             </button>
           </div>
+
+          {/* Блок статуса процесса */}
+          {loading && processStatus && (
+            <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center">
+                <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                  {processStatus}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Блок отображения результата */}
           {result && (
