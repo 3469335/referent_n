@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ArticleData {
   date: string;
@@ -23,6 +24,48 @@ export default function Home() {
   const [articleData, setArticleData] = useState<ArticleData | null>(null);
   const [cachedResults, setCachedResults] = useState<CachedResult>({});
   const [processStatus, setProcessStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Функция для преобразования ошибок в дружественные тексты
+  const getFriendlyError = (error: Error | string, context?: string): string => {
+    const errorMessage = error instanceof Error ? error.message : error;
+    const lowerMessage = errorMessage.toLowerCase();
+
+    // Ошибки загрузки статьи
+    if (context === 'parse' || lowerMessage.includes('fetch') || lowerMessage.includes('parse') || 
+        lowerMessage.includes('timeout') || lowerMessage.includes('404') || 
+        lowerMessage.includes('500') || lowerMessage.includes('failed to fetch')) {
+      return 'Не удалось загрузить статью по этой ссылке.';
+    }
+
+    // Ошибки AI обработки
+    if (context === 'ai' || lowerMessage.includes('ai processing') || 
+        lowerMessage.includes('openrouter') || lowerMessage.includes('api key')) {
+      if (lowerMessage.includes('timeout') || lowerMessage.includes('took too long')) {
+        return 'Обработка заняла слишком много времени. Попробуйте еще раз или используйте более короткую статью.';
+      }
+      if (lowerMessage.includes('api key')) {
+        return 'Ошибка конфигурации: не настроен API ключ.';
+      }
+      return 'Не удалось обработать статью. Попробуйте еще раз.';
+    }
+
+    // Ошибки перевода
+    if (context === 'translate' || lowerMessage.includes('translation') || lowerMessage.includes('translate')) {
+      if (lowerMessage.includes('timeout')) {
+        return 'Перевод занял слишком много времени. Попробуйте еще раз.';
+      }
+      return 'Не удалось перевести статью. Попробуйте еще раз.';
+    }
+
+    // Общие ошибки
+    if (lowerMessage.includes('network') || lowerMessage.includes('connection')) {
+      return 'Проблема с подключением к интернету. Проверьте соединение и попробуйте еще раз.';
+    }
+
+    // Если не удалось определить тип ошибки, возвращаем общее сообщение
+    return 'Произошла ошибка. Попробуйте еще раз.';
+  };
 
   const handleTranslate = async () => {
     if (!articleData) {
@@ -40,6 +83,7 @@ export default function Home() {
     setLoading(true);
     setActiveButton('translate');
     setResult('');
+    setError(null);
     setProcessStatus('Перевожу статью...');
 
     try {
@@ -56,8 +100,10 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка при переводе статьи');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const friendlyError = getFriendlyError(errorData.error || 'Ошибка при переводе статьи', 'translate');
+        setError(friendlyError);
+        throw new Error(friendlyError);
       }
 
       const { translation } = await response.json();
@@ -65,6 +111,7 @@ export default function Home() {
       // Форматируем результат
       const formattedResult = `Перевод статьи:\n\n${translation}`;
       setResult(formattedResult);
+      setError(null);
       
       // Сохраняем результат в кэш
       setCachedResults(prev => ({
@@ -73,7 +120,9 @@ export default function Home() {
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Произошла ошибка при переводе статьи. Пожалуйста, попробуйте снова.';
-      setResult(`Ошибка: ${errorMessage}`);
+      if (!errorMessage.startsWith('Не удалось') && !errorMessage.startsWith('Перевод занял')) {
+        setError(getFriendlyError(errorMessage, 'translate'));
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -98,6 +147,7 @@ export default function Home() {
     setLoading(true);
     setActiveButton(action);
     setResult('');
+    setError(null);
 
     try {
       let currentArticleData = articleData;
@@ -114,19 +164,22 @@ export default function Home() {
         });
 
         if (!parseResponse.ok) {
-          const errorData = await parseResponse.json();
-          throw new Error(errorData.error || 'Ошибка при загрузке статьи');
+          // Для всех ошибок загрузки статьи показываем единое сообщение
+          setError('Не удалось загрузить статью по этой ссылке.');
+          throw new Error('Не удалось загрузить статью по этой ссылке.');
         }
 
         currentArticleData = await parseResponse.json();
         setArticleData(currentArticleData);
+        setError(null);
         // Очищаем кэш при загрузке новой статьи
         setCachedResults({});
       }
 
       // Проверяем, что данные статьи получены
       if (!currentArticleData) {
-        throw new Error('Не удалось загрузить статью');
+        setError('Не удалось загрузить статью по этой ссылке.');
+        throw new Error('Не удалось загрузить статью по этой ссылке.');
       }
 
       // Обновляем статус в зависимости от действия
@@ -155,12 +208,15 @@ export default function Home() {
       });
 
       if (!aiResponse.ok) {
-        const errorData = await aiResponse.json();
-        throw new Error(errorData.error || 'Ошибка при обработке статьи');
+        const errorData = await aiResponse.json().catch(() => ({ error: 'Unknown error' }));
+        const friendlyError = getFriendlyError(errorData.error || 'Ошибка при обработке статьи', 'ai');
+        setError(friendlyError);
+        throw new Error(friendlyError);
       }
 
       const { result } = await aiResponse.json();
       setResult(result);
+      setError(null);
       
       // Сохраняем результат в кэш
       setCachedResults(prev => ({
@@ -169,7 +225,13 @@ export default function Home() {
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Произошла ошибка при обработке статьи. Пожалуйста, попробуйте снова.';
-      setResult(`Ошибка: ${errorMessage}`);
+      // Если ошибка еще не установлена (не из загрузки статьи), устанавливаем дружественное сообщение
+      if (!error || (error instanceof Error && !error.message.startsWith('Не удалось') && !error.message.startsWith('Обработка заняла'))) {
+        const friendlyError = getFriendlyError(errorMessage, 'ai');
+        if (!error || (error instanceof Error && error.message !== friendlyError)) {
+          setError(friendlyError);
+        }
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -217,6 +279,7 @@ export default function Home() {
               <button
                 onClick={handleTranslate}
                 disabled={loading}
+                title="Показать полный перевод статьи"
                 className={`w-full px-6 py-3 rounded-lg font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                   activeButton === 'translate' && loading
                     ? 'bg-orange-600 ring-4 ring-orange-300'
@@ -336,6 +399,25 @@ export default function Home() {
                   {processStatus}
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Блок ошибок */}
+          {error && (
+            <div className="mt-8">
+              <Alert variant="destructive">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <AlertTitle>Ошибка</AlertTitle>
+                    <AlertDescription className="mt-1">
+                      {error}
+                    </AlertDescription>
+                  </div>
+                </div>
+              </Alert>
             </div>
           )}
 

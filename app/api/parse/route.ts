@@ -50,8 +50,22 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok) {
+      // Определяем тип ошибки для дружественного сообщения
+      let errorType = 'parse';
+      if (response.status === 404) {
+        errorType = 'not_found';
+      } else if (response.status >= 500) {
+        errorType = 'server_error';
+      } else if (response.status === 403 || response.status === 401) {
+        errorType = 'access_denied';
+      }
+      
       return NextResponse.json(
-        { error: `Failed to fetch article: ${response.statusText}` },
+        { 
+          error: `Failed to fetch article: ${response.statusText}`,
+          errorType: errorType,
+          status: response.status
+        },
         { status: response.status }
       );
     }
@@ -187,7 +201,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error parsing article:', error);
     return NextResponse.json(
-      { error: 'Failed to parse article', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        error: 'Failed to parse article', 
+        errorType: 'parse_error',
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }
