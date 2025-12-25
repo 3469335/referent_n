@@ -26,6 +26,8 @@ export default function Home() {
   const [processStatus, setProcessStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [imageCopied, setImageCopied] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   // Функция для преобразования ошибок в дружественные тексты
@@ -65,6 +67,14 @@ export default function Home() {
       return 'Проблема с подключением к интернету. Проверьте соединение и попробуйте еще раз.';
     }
 
+    // Ошибки генерации изображений
+    if (context === 'image' || lowerMessage.includes('image generation') || lowerMessage.includes('huggingface')) {
+      if (lowerMessage.includes('model_loading') || lowerMessage.includes('модель загружается')) {
+        return 'Модель загружается. Пожалуйста, подождите несколько секунд и попробуйте снова.';
+      }
+      return 'Не удалось сгенерировать изображение. Попробуйте еще раз.';
+    }
+
     // Если не удалось определить тип ошибки, возвращаем общее сообщение
     return 'Произошла ошибка. Попробуйте еще раз.';
   };
@@ -79,6 +89,39 @@ export default function Home() {
     setActiveButton(null);
     setProcessStatus('');
     setCopied(false);
+    setImageCopied(false);
+    setGeneratedImage(null);
+  };
+
+  // Функция копирования изображения
+  const handleCopyImage = async () => {
+    if (!generatedImage) return;
+    
+    try {
+      // Преобразуем base64 в blob
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      
+      // Копируем изображение в буфер обмена
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob
+        })
+      ]);
+      
+      setImageCopied(true);
+      setTimeout(() => setImageCopied(false), 2000);
+    } catch (error) {
+      console.error('Ошибка при копировании изображения:', error);
+      // Fallback: пытаемся скопировать как URL
+      try {
+        await navigator.clipboard.writeText(generatedImage);
+        setImageCopied(true);
+        setTimeout(() => setImageCopied(false), 2000);
+      } catch (fallbackError) {
+        console.error('Ошибка при копировании URL изображения:', fallbackError);
+      }
+    }
   };
 
   // Функция копирования результата
@@ -96,12 +139,70 @@ export default function Home() {
 
   // Автоматическая прокрутка к результатам после успешной генерации
   useEffect(() => {
-    if (result && !result.startsWith('Ошибка:') && resultRef.current) {
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+    if ((result && !result.startsWith('Ошибка:')) || generatedImage) {
+      if (resultRef.current) {
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
     }
-  }, [result]);
+  }, [result, generatedImage]);
+
+  // Функция генерации иллюстрации
+  const handleGenerateImage = async () => {
+    if (!cachedResults.summary) {
+      setError('Сначала получите резюме статьи, нажав кнопку "О чем статья?"');
+      return;
+    }
+
+    setLoading(true);
+    setActiveButton('illustration');
+    setError(null);
+    setProcessStatus('Генерирую иллюстрацию...');
+
+    try {
+      // Создаем промпт на основе резюме статьи
+      const imagePrompt = `Create a detailed, professional illustration based on this article summary: ${cachedResults.summary}. The image should be visually appealing, modern, and represent the main theme of the article. Style: digital art, high quality, detailed.`;
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: imagePrompt }),
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: 'Ошибка при обработке ответа сервера' };
+        }
+        
+        if (errorData.errorType === 'model_loading') {
+          throw new Error('Модель загружается. Пожалуйста, подождите несколько секунд и попробуйте снова.');
+        }
+        
+        if (errorData.errorType === 'auth_error') {
+          throw new Error('Ошибка авторизации. Проверьте правильность API ключа Hugging Face в настройках.');
+        }
+        
+        throw new Error(errorData.error || 'Ошибка при генерации изображения');
+      }
+
+      const { image } = await response.json();
+      setGeneratedImage(image);
+      setError(null);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось сгенерировать изображение. Попробуйте еще раз.';
+      setError(getFriendlyError(errorMessage, 'image'));
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setProcessStatus('');
+    }
+  };
 
   const handleTranslate = async () => {
     if (!articleData) {
@@ -348,6 +449,34 @@ export default function Home() {
             </div>
           )}
 
+          {/* Кнопка генерации иллюстрации */}
+          {cachedResults.summary && (
+            <div className="mb-4 sm:mb-6">
+              <button
+                onClick={handleGenerateImage}
+                disabled={loading}
+                title="Сгенерировать иллюстрацию на основе резюме статьи"
+                className={`w-full px-4 sm:px-6 py-3 rounded-lg text-sm sm:text-base font-semibold text-white transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                  activeButton === 'illustration' && loading
+                    ? 'bg-pink-600 ring-4 ring-pink-300'
+                    : 'bg-pink-500 hover:bg-pink-600'
+                }`}
+              >
+                {loading && activeButton === 'illustration' ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Генерация...
+                  </span>
+                ) : (
+                  'Иллюстрация'
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Информационное сообщение */}
           {url.trim() && !articleData && !loading && (
             <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -356,7 +485,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Подсказка:</strong> Нажмите на любую из кнопок ниже — статья загрузится и обработается автоматически.
+                  <strong>Подсказка:</strong> Нажмите на любую из кнопок ниже — статья загрузится и обработается автоматически. Для доступа к иллюстрации для статьи нажмите кнопку "О чем статья?".
                 </p>
               </div>
             </div>
@@ -520,6 +649,45 @@ export default function Home() {
                 }`}>
                   {result}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Блок отображения иллюстрации */}
+          {generatedImage && (
+            <div ref={resultRef} className="mt-6 sm:mt-8 p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                  Иллюстрация:
+                </h2>
+                <button
+                  onClick={handleCopyImage}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg transition-colors"
+                  title="Копировать изображение"
+                >
+                  {imageCopied ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Скопировано
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Копировать
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <img 
+                  src={generatedImage} 
+                  alt="Сгенерированная иллюстрация статьи" 
+                  className="max-w-full h-auto rounded-lg shadow-lg"
+                />
               </div>
             </div>
           )}

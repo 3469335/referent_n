@@ -81,6 +81,10 @@ vercel
 # Получите ключ на https://openrouter.ai/
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 
+# Hugging Face API Key
+# Получите ключ на https://huggingface.co/settings/tokens
+HUGGINGFACE_API_KEY=your_huggingface_api_key_here
+
 # Optional: App URL for OpenRouter API
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
