@@ -485,7 +485,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-300">
-                  <strong>Подсказка:</strong> Нажмите на любую из кнопок ниже — статья загрузится и обработается автоматически. Для доступа к иллюстрации для статьи нажмите кнопку "О чем статья?".
+                  <strong>Подсказка:</strong> Нажмите на любую из кнопок ниже — статья загрузится и обработается автоматически. Для доступа к иллюстрации для статьи нажмите кнопку &quot;О чем статья?&quot;.
                 </p>
               </div>
             </div>
