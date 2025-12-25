@@ -682,13 +682,16 @@ export default function Home() {
                   )}
                 </button>
               </div>
-              <div className="flex justify-center">
+              <div className="flex justify-center mb-4">
                 <img 
                   src={generatedImage} 
                   alt="Сгенерированная иллюстрация статьи" 
                   className="max-w-full h-auto rounded-lg shadow-lg"
                 />
               </div>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center italic">
+                Если иллюстрация не устраивает — нажмите кнопку &quot;Иллюстрация&quot; повторно
+              </p>
             </div>
           )}
 
